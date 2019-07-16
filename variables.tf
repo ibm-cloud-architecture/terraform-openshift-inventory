@@ -114,16 +114,8 @@ variable "openshift_identity_provider" {
     default = "openshift_master_htpasswd_users={'admin': '$apr1$qSzqkDd8$fU.yI4bV8KmXD9kreFSL//'}"
 }
 
-variable "master_key_file" {
-    default = ""
-}
-
 variable "letsencrypt" {
     default = false
-}
-
-variable "master_cert_file" {
-    default = ""
 }
 
 variable "registry_volume_size" {
