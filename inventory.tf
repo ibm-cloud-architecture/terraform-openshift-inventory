@@ -1,43 +1,8 @@
 #--------------------------------#
 #--------------------------------#
-
-data "template_file" "master_block" {
-  count = "${var.master_count}"
-  template = "$${hostname} openshift_ip=$${ip} openshift_node_group_name='node-config-master'"
-  vars {
-   hostname = "${element(var.master_hostname, count.index)}.${var.domain}"
-   ip = "${element(var.master_private_ip, count.index)}"
-  }
+locals {
+    gluster_storage_devices = "${var.cloudprovider == "ibm" ? "\"/dev/xvde\", \"/dev/xvdf\", \"/dev/xvdg\"" : "${var.cloudprovider == "azure" ? "\"/dev/sdd\"" : ""}"}"
 }
-
-data "template_file" "infra_block" {
-  count = "${var.infra_count}"
-  template = "$${hostname} openshift_ip=$${ip} openshift_node_group_name='node-config-infra'"
-  vars {
-   hostname = "${element(var.infra_hostname, count.index)}.${var.domain}"
-   ip = "${element(var.infra_private_ip, count.index)}"
-  }
-}
-
-data "template_file" "compute_block" {
-  count = "${var.app_count}"
-  template = "$${hostname} openshift_ip=$${ip} openshift_node_group_name='node-config-compute'"
-  vars {
-   hostname = "${element(var.app_hostname, count.index)}.${var.domain}"
-   ip = "${element(var.app_private_ip, count.index)}"
-  }
-}
-
-data "template_file" "gluster_block" {
-  count = "${var.storage_count}"
-  template = "$${hostname} glusterfs_ip=$${hostip} glusterfs_devices='[ \"/dev/dm-0\", \"/dev/dm-1\", \"/dev/dm-2\" ]' openshift_node_group_name='node-config-compute'"
-  vars {
-   hostname = "${element(var.storage_hostname, count.index)}.${var.domain}"
-   hostip = "${element(var.storage_private_ip, count.index)}"
-  }
-}
-
-
 # ansible inventory file
 data "template_file" "ansible_hosts" {
   template = <<EOF
@@ -48,7 +13,9 @@ nodes
 ${var.storage_count == 0 ? "" : "glusterfs"}
 
 [OSEv3:vars]
-ansible_user=root
+ansible_ssh_user=${var.ssh_username}
+${var.ssh_username == "root" ? "" : "ansible_become=true"}
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 openshift_deployment_type=${var.ose_deployment_type}
 openshift_release=v${var.ose_version}
 containerized=true
@@ -80,20 +47,20 @@ openshift_master_htpasswd_users={'admin': '$apr1$qSzqkDd8$fU.yI4bV8KmXD9kreFSL//
 # if we're using oidc, and it uses a trusted cert, we can use the system truststore
 openshift_master_openid_ca_file=/etc/ssl/certs/ca-bundle.crt
 
-${var.letsencrypt ? "
+${var.dnscerts ? "
 openshift_master_named_certificates=[{'certfile': '/root/master.crt', 'keyfile': '/root/master.key', 'names': ['${var.cluster_public_hostname}']}]
 openshift_master_overwrite_named_certificates=true" : ""}
 
 # router
 openshift_master_default_subdomain=${var.app_cluster_subdomain}
-${var.letsencrypt ? "openshift_hosted_router_certificate={'certfile': '/root/router.crt', 'keyfile': '/root/router.key', 'cafile': '/root/router_ca.crt'}" : ""}
+${var.dnscerts ? "openshift_hosted_router_certificate={'certfile': '/root/router.crt', 'keyfile': '/root/router.key', 'cafile': '/root/router_ca.crt'}" : ""}
 # cluster console
 openshift_console_install=true
-${var.letsencrypt ? "openshift_console_cert=/root/router.crt
+${var.dnscerts ? "openshift_console_cert=/root/router.crt
 openshift_console_key=/root/router.key" : ""}
 # registry certs
 openshift_hosted_registry_routehost=registry.${var.app_cluster_subdomain}
-${var.letsencrypt ? "openshift_hosted_registry_routetermination=reencrypt
+${var.dnscerts ? "openshift_hosted_registry_routetermination=reencrypt
 openshift_hosted_registry_routecertificates={'certfile': '/root/router.crt', 'keyfile': '/root/router.key', 'cafile': '/root/router_ca.crt'}" : "" }
 ${var.storage_count == 0 ? "" : "openshift_hosted_registry_storage_kind=glusterfs
 openshift_hosted_registry_storage_volume_size=${var.registry_volume_size}Gi
@@ -138,10 +105,12 @@ var.master_hostname,
 var.domain,
 var.master_private_ip))}
 
-${var.storage_count == 0 ? "" : "[glusterfs]
-${join("\n", formatlist("%v.%v glusterfs_devices='[ \"/dev/dm-0\", \"/dev/dm-1\", \"/dev/dm-2\" ]' openshift_node_group_name='node-config-compute'",
+${var.storage_count == 0 ? "" : "
+[glusterfs]
+${join("\n", formatlist("%v.%v glusterfs_devices='[ %v ]' openshift_node_group_name='node-config-compute'",
 var.storage_hostname,
-var.domain))}"}
+var.domain,
+local.gluster_storage_devices))}"}
 
 [nodes]
 ${join("\n", formatlist("%v.%v openshift_node_group_name=\"node-config-master\"",
@@ -175,16 +144,6 @@ data "template_file" "master_host_file_template" {
   template = "$${master_ip} $${master_hostname} $${master_hostname_domain} "
   vars {
     master_ip              = "${element(var.master_private_ip, count.index)}"
-    master_hostname        = "${element(var.master_hostname, count.index)}"
-    master_hostname_domain = "${element(var.master_hostname, count.index)}.${var.domain}"
-  }
-}
-
-data "template_file" "master_public_host_file_template" {
-  count = "${var.master_count}"
-  template = "$${master_ip} $${master_hostname} $${master_hostname_domain} "
-  vars {
-    master_ip              = "${element(var.master_public_ip, count.index)}"
     master_hostname        = "${element(var.master_hostname, count.index)}"
     master_hostname_domain = "${element(var.master_hostname, count.index)}.${var.domain}"
   }
@@ -225,4 +184,115 @@ resource "local_file" "host_file_render" {
     # content     = "${join("\n", concat(data.template_file.master_host_file_template.*.rendered,data.template_file.infra_host_file_template.*.rendered,data.template_file.app_host_file_template.*.rendered,data.template_file.master_public_host_file_template.*.rendered,data.template_file.storage_host_file_template.*.rendered))}"
     content     = "${join("\n", concat(data.template_file.master_host_file_template.*.rendered,data.template_file.infra_host_file_template.*.rendered,data.template_file.app_host_file_template.*.rendered,data.template_file.storage_host_file_template.*.rendered))}"
     filename    = "${path.root}/inventory_repo/hosts"
+}
+
+resource "null_resource" "copy_repo_bastion" {
+    connection {
+        type = "ssh"
+        user = "root"
+        host = "${var.bastion_ip_address}"
+        private_key = "${file(var.bastion_private_ssh_key)}"
+    }
+
+    provisioner "file" {
+        when = "create"
+        source      = "${path.root}/inventory_repo/"
+        destination = "~/"
+    }
+
+    depends_on = [
+        "local_file.ose_inventory_file",
+        "local_file.host_file_render"
+    ]
+}
+
+resource "null_resource" "copy_repo_master" {
+    count = "${var.master_count}"
+    connection {
+        type = "ssh"
+        user = "root"
+        host = "${element(var.master_private_ip, count.index)}"
+        private_key = "${file(var.bastion_private_ssh_key)}"
+        bastion_host = "${var.bastion_ip_address}"
+        bastion_host_key = "${var.bastion_private_ssh_key}"
+    }
+
+    provisioner "file" {
+        when = "create"
+        source      = "${path.root}/inventory_repo/hosts"
+        destination = "~/"
+    }
+
+    depends_on = [
+        "local_file.host_file_render"
+    ]
+
+}
+
+resource "null_resource" "copy_repo_infra" {
+    count = "${var.infra_count}"
+    connection {
+        type = "ssh"
+        user = "root"
+        host = "${element(var.infra_private_ip, count.index)}"
+        private_key = "${file(var.bastion_private_ssh_key)}"
+        bastion_host = "${var.bastion_ip_address}"
+        bastion_host_key = "${var.bastion_private_ssh_key}"
+    }
+
+    provisioner "file" {
+        when = "create"
+        source      = "${path.root}/inventory_repo/hosts"
+        destination = "~/"
+    }
+
+    depends_on = [
+        "local_file.host_file_render"
+    ]
+
+}
+
+resource "null_resource" "copy_repo_app" {
+    count = "${var.app_count}"
+    connection {
+        type = "ssh"
+        user = "root"
+        host = "${element(var.app_private_ip, count.index)}"
+        private_key = "${file(var.bastion_private_ssh_key)}"
+        bastion_host = "${var.bastion_ip_address}"
+        bastion_host_key = "${var.bastion_private_ssh_key}"
+    }
+
+    provisioner "file" {
+        when = "create"
+        source      = "${path.root}/inventory_repo/hosts"
+        destination = "~/"
+    }
+
+    depends_on = [
+        "local_file.host_file_render"
+    ]
+
+}
+
+resource "null_resource" "copy_repo_storage" {
+    count = "${var.storage_count}"
+    connection {
+        type = "ssh"
+        user = "root"
+        host = "${element(var.storage_private_ip, count.index)}"
+        private_key = "${file(var.bastion_private_ssh_key)}"
+        bastion_host = "${var.bastion_ip_address}"
+        bastion_host_key = "${var.bastion_private_ssh_key}"
+    }
+
+    provisioner "file" {
+        when = "create"
+        source      = "${path.root}/inventory_repo/hosts"
+        destination = "~/"
+    }
+
+    depends_on = [
+        "local_file.host_file_render"
+    ]
 }
