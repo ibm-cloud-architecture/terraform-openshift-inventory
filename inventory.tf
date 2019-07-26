@@ -10,7 +10,7 @@ data "template_file" "ansible_hosts" {
 masters
 etcd
 nodes
-${var.storage_count == 0 ? "" : "glusterfs"}
+${length(var.storage_private_ip) == 0 ? "" : "glusterfs"}
 
 [OSEv3:vars]
 ansible_ssh_user=${var.ssh_username}
@@ -62,7 +62,7 @@ openshift_console_key=/root/router.key" : ""}
 openshift_hosted_registry_routehost=registry.${var.app_cluster_subdomain}
 ${var.dnscerts ? "openshift_hosted_registry_routetermination=reencrypt
 openshift_hosted_registry_routecertificates={'certfile': '/root/router.crt', 'keyfile': '/root/router.key', 'cafile': '/root/router_ca.crt'}" : "" }
-${var.storage_count == 0 ? "" : "openshift_hosted_registry_storage_kind=glusterfs
+${length(var.storage_private_ip) == 0 ? "" : "openshift_hosted_registry_storage_kind=glusterfs
 openshift_hosted_registry_storage_volume_size=${var.registry_volume_size}Gi
 openshift_storage_glusterfs_block_deploy=true
 openshift_storage_glusterfs_block_storageclass=true
@@ -92,7 +92,7 @@ openshift_logging_es_pvc_storage_class_name=glusterfs-storage
 openshift_logging_es_pvc_size=20Gi
 openshift_logging_es_ops_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_logging_es_nodeselector={"node-role.kubernetes.io/infra":"true"}
-openshift_logging_es_cluster_size=${var.infra_count}
+openshift_logging_es_cluster_size=${length(var.infra_private_ip)}
 
 [masters]
 ${join("\n", formatlist("%v.%v",
@@ -105,7 +105,7 @@ var.master_hostname,
 var.domain,
 var.master_private_ip))}
 
-${var.storage_count == 0 ? "" : "
+${length(var.storage_private_ip) == 0 ? "" : "
 [glusterfs]
 ${join("\n", formatlist("%v.%v glusterfs_devices='[ %v ]' openshift_node_group_name='node-config-compute'",
 var.storage_hostname,
@@ -122,7 +122,7 @@ var.domain))}
 ${join("\n", formatlist("%v.%v openshift_node_group_name=\"node-config-compute\"",
 var.app_hostname,
 var.domain))}
-${var.storage_count == 0 ? "" : "${join("\n", formatlist("%v.%v openshift_schedulable=True openshift_node_group_name=\"node-config-compute\"",
+${length(var.storage_private_ip) == 0 ? "" : "${join("\n", formatlist("%v.%v openshift_schedulable=True openshift_node_group_name=\"node-config-compute\"",
 var.storage_hostname,
 var.domain))}"}
 EOF
@@ -140,7 +140,7 @@ resource "local_file" "ose_inventory_file" {
 
 # Create host file
 data "template_file" "master_host_file_template" {
-  count = "${var.master_count}"
+  count = "${length(var.master_private_ip)}"
   template = "$${master_ip} $${master_hostname} $${master_hostname_domain} "
   vars {
     master_ip              = "${element(var.master_private_ip, count.index)}"
@@ -150,7 +150,7 @@ data "template_file" "master_host_file_template" {
 }
 
 data "template_file" "app_host_file_template" {
-  count = "${var.app_count}"
+  count = "${length(var.app_private_ip)}"
   template = "$${app_ip} $${app_hostname} $${app_hostname_domain} "
   vars {
     app_ip              = "${element(var.app_private_ip, count.index)}"
@@ -160,7 +160,7 @@ data "template_file" "app_host_file_template" {
 }
 
 data "template_file" "infra_host_file_template" {
-  count = "${var.infra_count}"
+  count = "${length(var.infra_private_ip)}"
   template = "$${infra_ip} $${infra_hostname} $${infra_hostname_domain} "
   vars {
     infra_ip              = "${element(var.infra_private_ip, count.index)}"
@@ -170,7 +170,7 @@ data "template_file" "infra_host_file_template" {
 }
 
 data "template_file" "storage_host_file_template" {
-  count = "${var.storage_count}"
+  count = "${length(var.storage_private_ip)}"
   template = "$${storage_ip} $${storage_hostname} $${storage_hostname_domain} "
   vars {
     storage_ip              = "${element(var.storage_private_ip, count.index)}"
@@ -207,7 +207,7 @@ resource "null_resource" "copy_repo_bastion" {
 }
 
 resource "null_resource" "copy_repo_master" {
-    count = "${var.master_count}"
+    count = "${length(var.master_private_ip)}"
     connection {
         type = "ssh"
         user = "root"
@@ -230,7 +230,7 @@ resource "null_resource" "copy_repo_master" {
 }
 
 resource "null_resource" "copy_repo_infra" {
-    count = "${var.infra_count}"
+    count = "${length(var.infra_private_ip)}"
     connection {
         type = "ssh"
         user = "root"
@@ -253,7 +253,7 @@ resource "null_resource" "copy_repo_infra" {
 }
 
 resource "null_resource" "copy_repo_app" {
-    count = "${var.app_count}"
+    count = "${length(var.app_private_ip)}"
     connection {
         type = "ssh"
         user = "root"
@@ -276,7 +276,7 @@ resource "null_resource" "copy_repo_app" {
 }
 
 resource "null_resource" "copy_repo_storage" {
-    count = "${var.storage_count}"
+    count = "${length(var.storage_private_ip)}"
     connection {
         type = "ssh"
         user = "root"

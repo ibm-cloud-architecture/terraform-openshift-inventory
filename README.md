@@ -21,10 +21,6 @@ module "inventory" {
     infra_hostname          = "${module.infrastructure.infra_hostname}"
     app_hostname            = "${module.infrastructure.app_hostname}"
     storage_hostname        = "${module.infrastructure.storage_hostname}"
-    master_count            = "${var.master_count}"
-    infra_count             = "${var.infra_count}"
-    app_count               = "${var.app_count}"
-    storage_count           = "${var.storage_count}"
     ose_version             = "${var.ose_version}"
     ose_deployment_type     = "${var.ose_deployment_type}"
     image_registry          = "${var.image_registry}"
@@ -53,10 +49,6 @@ module "inventory" {
 |infra_hostname|Hostnames of Infra Nodes|-|list|
 |app_hostname|Hostnames of App Nodes|-|list|
 |storage_hostname|Hostnames of Storage Nodes|-|list|
-|master_count|Number of Master Nodes|-|int|
-|infra_count|Number of Infra Nodes|-|int|
-|app_count|Number of App Nodes|-|int|
-|storage_count|Number of Storage Nodes|-|int|
 |ose_version|Version of OpenShift to install|3.11|string|
 |ose_deployment_type|OpenShift Product Type|openshift-enterprise|string|
 |image_registry|Image registry to pull installation images from|registry.redhat.io|string|

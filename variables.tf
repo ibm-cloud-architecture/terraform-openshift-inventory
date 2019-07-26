@@ -53,22 +53,6 @@ variable "domain" {
 
 }
 
-variable "master_count" {
-
-}
-
-variable "infra_count" {
-
-}
-
-variable "app_count" {
-
-}
-
-variable "storage_count" {
-
-}
-
 variable os_reference_code {
     default = "REDHAT_7_64"
 }
