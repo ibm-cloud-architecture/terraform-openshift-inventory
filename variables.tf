@@ -7,20 +7,12 @@ variable "master_private_ip" {
 variable "dnscerts" {
     default = false
 }
-# variable "master_public_ip" {
-#   type = "list"
-#
-# }
-#
+
 variable "infra_private_ip" {
    type = "list"
 }
 
-# variable "infra_public_ip" {
-#    type = "list"
-#
-# }
-#
+
 variable "app_private_ip" {
    type = "list"
 }

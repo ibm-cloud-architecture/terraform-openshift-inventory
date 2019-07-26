@@ -181,7 +181,6 @@ data "template_file" "storage_host_file_template" {
 
 # Create a installer config file for openshift installation
 resource "local_file" "host_file_render" {
-    # content     = "${join("\n", concat(data.template_file.master_host_file_template.*.rendered,data.template_file.infra_host_file_template.*.rendered,data.template_file.app_host_file_template.*.rendered,data.template_file.master_public_host_file_template.*.rendered,data.template_file.storage_host_file_template.*.rendered))}"
     content     = "${join("\n", concat(data.template_file.master_host_file_template.*.rendered,data.template_file.infra_host_file_template.*.rendered,data.template_file.app_host_file_template.*.rendered,data.template_file.storage_host_file_template.*.rendered))}"
     filename    = "${path.root}/inventory_repo/hosts"
 }
