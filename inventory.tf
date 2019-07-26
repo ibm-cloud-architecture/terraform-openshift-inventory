@@ -1,8 +1,9 @@
 #--------------------------------#
 #--------------------------------#
 locals {
-    gluster_storage_devices = "${var.cloudprovider == "ibm" ? "\"/dev/xvde\", \"/dev/xvdf\", \"/dev/xvdg\"" : "${var.cloudprovider == "azure" ? "\"/dev/sdd\"" : ""}"}"
+    gluster_storage_devices = "${var.storage["gluster_disk_device"]}"
 }
+
 # ansible inventory file
 data "template_file" "ansible_hosts" {
   template = <<EOF

@@ -100,3 +100,5 @@ variable "cloudprovider" {
 
 variable "bastion_ip_address" {}
 variable "bastion_private_ssh_key" {}
+
+variable "storage" {type = "map"}
