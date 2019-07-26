@@ -1,7 +1,7 @@
 #--------------------------------#
 #--------------------------------#
 locals {
-    gluster_storage_devices = "${var.storage["gluster_disk_device"]}"
+    gluster_storage_devices = "${list(var.storage["gluster_disk_device"])}"
 }
 
 # ansible inventory file
