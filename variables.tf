@@ -1,4 +1,3 @@
-variable "bastion_private_ip" {}
 
 variable "master_private_ip" {
   type = "list"

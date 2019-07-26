@@ -188,7 +188,7 @@ resource "local_file" "host_file_render" {
 resource "null_resource" "copy_repo_bastion" {
     connection {
         type = "ssh"
-        user = "root"
+        user = "${var.ssh_username}"
         host = "${var.bastion_ip_address}"
         private_key = "${file(var.bastion_private_ssh_key)}"
     }
@@ -209,7 +209,7 @@ resource "null_resource" "copy_repo_master" {
     count = "${length(var.master_private_ip)}"
     connection {
         type = "ssh"
-        user = "root"
+        user = "${var.ssh_username}"
         host = "${element(var.master_private_ip, count.index)}"
         private_key = "${file(var.bastion_private_ssh_key)}"
         bastion_host = "${var.bastion_ip_address}"
@@ -232,7 +232,7 @@ resource "null_resource" "copy_repo_infra" {
     count = "${length(var.infra_private_ip)}"
     connection {
         type = "ssh"
-        user = "root"
+        user = "${var.ssh_username}"
         host = "${element(var.infra_private_ip, count.index)}"
         private_key = "${file(var.bastion_private_ssh_key)}"
         bastion_host = "${var.bastion_ip_address}"
@@ -255,7 +255,7 @@ resource "null_resource" "copy_repo_app" {
     count = "${length(var.app_private_ip)}"
     connection {
         type = "ssh"
-        user = "root"
+        user = "${var.ssh_username}"
         host = "${element(var.app_private_ip, count.index)}"
         private_key = "${file(var.bastion_private_ssh_key)}"
         bastion_host = "${var.bastion_ip_address}"
@@ -278,7 +278,7 @@ resource "null_resource" "copy_repo_storage" {
     count = "${length(var.storage_private_ip)}"
     connection {
         type = "ssh"
-        user = "root"
+        user = "${var.ssh_username}"
         host = "${element(var.storage_private_ip, count.index)}"
         private_key = "${file(var.bastion_private_ssh_key)}"
         bastion_host = "${var.bastion_ip_address}"
