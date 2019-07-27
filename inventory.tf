@@ -1,9 +1,8 @@
 #--------------------------------#
 #--------------------------------#
 locals {
-    gluster_storage_devices = "${list(var.storage["gluster_disk_device"])}"
+    gluster_storage_devices = "\"${var.storage["gluster_disk_device"]}\""
 }
-
 # ansible inventory file
 data "template_file" "ansible_hosts" {
   template = <<EOF
@@ -12,6 +11,7 @@ masters
 etcd
 nodes
 ${length(var.storage_private_ip) == 0 ? "" : "glusterfs"}
+${var.haproxy ? "lb" : ""}
 
 [OSEv3:vars]
 ansible_ssh_user=${var.ssh_username}
@@ -49,20 +49,20 @@ openshift_master_htpasswd_users={'admin': '$apr1$qSzqkDd8$fU.yI4bV8KmXD9kreFSL//
 openshift_master_openid_ca_file=/etc/ssl/certs/ca-bundle.crt
 
 ${var.dnscerts ? "
-openshift_master_named_certificates=[{'certfile': '/root/master.crt', 'keyfile': '/root/master.key', 'names': ['${var.cluster_public_hostname}']}]
+openshift_master_named_certificates=[{'certfile': '~/master.crt', 'keyfile': '~/master.key', 'names': ['${var.cluster_public_hostname}']}]
 openshift_master_overwrite_named_certificates=true" : ""}
 
 # router
 openshift_master_default_subdomain=${var.app_cluster_subdomain}
-${var.dnscerts ? "openshift_hosted_router_certificate={'certfile': '/root/router.crt', 'keyfile': '/root/router.key', 'cafile': '/root/router_ca.crt'}" : ""}
+${var.dnscerts ? "openshift_hosted_router_certificate={'certfile': '~/router.crt', 'keyfile': '~/router.key', 'cafile': '~/router_ca.crt'}" : ""}
 # cluster console
 openshift_console_install=true
-${var.dnscerts ? "openshift_console_cert=/root/router.crt
-openshift_console_key=/root/router.key" : ""}
+${var.dnscerts ? "openshift_console_cert=~/router.crt
+openshift_console_key=~/router.key" : ""}
 # registry certs
 openshift_hosted_registry_routehost=registry.${var.app_cluster_subdomain}
 ${var.dnscerts ? "openshift_hosted_registry_routetermination=reencrypt
-openshift_hosted_registry_routecertificates={'certfile': '/root/router.crt', 'keyfile': '/root/router.key', 'cafile': '/root/router_ca.crt'}" : "" }
+openshift_hosted_registry_routecertificates={'certfile': '~/router.crt', 'keyfile': '~/router.key', 'cafile': '~/router_ca.crt'}" : "" }
 ${length(var.storage_private_ip) == 0 ? "" : "openshift_hosted_registry_storage_kind=glusterfs
 openshift_hosted_registry_storage_volume_size=${var.registry_volume_size}Gi
 openshift_storage_glusterfs_block_deploy=true
@@ -112,6 +112,11 @@ ${join("\n", formatlist("%v.%v glusterfs_devices='[ %v ]' openshift_node_group_n
 var.storage_hostname,
 var.domain,
 local.gluster_storage_devices))}"}
+
+${var.haproxy ? "
+[lb]
+${format("%v.%v", var.bastion_hostname, var.domain)}
+" : ""}
 
 [nodes]
 ${join("\n", formatlist("%v.%v openshift_node_group_name=\"node-config-master\"",

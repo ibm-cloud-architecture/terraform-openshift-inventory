@@ -99,6 +99,10 @@ variable "cloudprovider" {
 
 
 variable "bastion_ip_address" {}
+variable "bastion_hostname" {}
 variable "bastion_private_ssh_key" {}
 
 variable "storage" {type = "map"}
+variable "haproxy" {
+    default = false
+}
