@@ -109,3 +109,7 @@ variable "storage" {type = "map"}
 variable "haproxy" {
     default = false
 }
+
+variable "admin_password" {
+    default = "admin"
+}

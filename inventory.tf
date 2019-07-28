@@ -2,7 +2,9 @@
 #--------------------------------#
 locals {
     gluster_storage_devices = "\"${var.storage["gluster_disk_device"]}\""
+    encoded_password = base64encode("${var.admin_password}")
 }
+
 # ansible inventory file
 data "template_file" "ansible_hosts" {
   template = <<EOF
@@ -44,7 +46,7 @@ openshift_master_cluster_method=native
 openshift_master_cluster_hostname=${var.master_cluster_hostname}
 openshift_master_cluster_public_hostname=${var.cluster_public_hostname}
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
-openshift_master_htpasswd_users={'admin': '$apr1$qSzqkDd8$fU.yI4bV8KmXD9kreFSL//'}
+openshift_master_htpasswd_users={'admin': '${local.encoded_password}'}
 # if we're using oidc, and it uses a trusted cert, we can use the system truststore
 openshift_master_openid_ca_file=/etc/ssl/certs/ca-bundle.crt
 
