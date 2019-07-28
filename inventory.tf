@@ -146,7 +146,7 @@ resource "local_file" "ose_inventory_file" {
 
 # Create host file
 data "template_file" "master_host_file_template" {
-  count = "${length(var.master_private_ip)}"
+  count = "${var.master["nodes"]}"
   template = "$${master_ip} $${master_hostname} $${master_hostname_domain} "
   vars {
     master_ip              = "${element(var.master_private_ip, count.index)}"
@@ -156,7 +156,7 @@ data "template_file" "master_host_file_template" {
 }
 
 data "template_file" "app_host_file_template" {
-  count = "${length(var.app_private_ip)}"
+  count = "${var.worker["nodes"]}"
   template = "$${app_ip} $${app_hostname} $${app_hostname_domain} "
   vars {
     app_ip              = "${element(var.app_private_ip, count.index)}"
@@ -166,7 +166,7 @@ data "template_file" "app_host_file_template" {
 }
 
 data "template_file" "infra_host_file_template" {
-  count = "${length(var.infra_private_ip)}"
+  count = "${var.infra["nodes"]}"
   template = "$${infra_ip} $${infra_hostname} $${infra_hostname_domain} "
   vars {
     infra_ip              = "${element(var.infra_private_ip, count.index)}"
@@ -176,7 +176,7 @@ data "template_file" "infra_host_file_template" {
 }
 
 data "template_file" "storage_host_file_template" {
-  count = "${length(var.storage_private_ip)}"
+  count = "${var.storage["nodes"]}"
   template = "$${storage_ip} $${storage_hostname} $${storage_hostname_domain} "
   vars {
     storage_ip              = "${element(var.storage_private_ip, count.index)}"
