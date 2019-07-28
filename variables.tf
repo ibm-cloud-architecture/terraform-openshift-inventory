@@ -102,6 +102,9 @@ variable "bastion_ip_address" {}
 variable "bastion_hostname" {}
 variable "bastion_private_ssh_key" {}
 
+variable "master"  {type = "map"}
+variable "infra"   {type = "map"}
+variable "worker"  {type = "map"}
 variable "storage" {type = "map"}
 variable "haproxy" {
     default = false
