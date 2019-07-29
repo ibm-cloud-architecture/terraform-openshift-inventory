@@ -2,7 +2,7 @@
 #--------------------------------#
 locals {
     gluster_storage_devices = "\"${var.storage["gluster_disk_device"]}\""
-    encoded_password = base64encode("${var.admin_password}")
+    encoded_password = "${base64encode("${var.admin_password}")}"
 }
 
 # ansible inventory file
