@@ -17,5 +17,5 @@ resource "random_id" "completed" {
 }
 
 output "completed" {
-    value = "${random_id.completed}"
+    value = "${random_id.completed.hex}"
 }
