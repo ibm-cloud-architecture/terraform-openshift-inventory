@@ -13,9 +13,16 @@ resource "random_id" "completed" {
         "null_resource.copy_repo_infra",
         "null_resource.copy_repo_app",
         "null_resource.copy_repo_storage",
+        "null_resource.dependency"
     ]
 }
 
 output "completed" {
     value = "${random_id.completed.hex}"
+}
+
+resource "null_resource" "dependency" {
+  triggers = {
+    all_dependencies = "${join(",", var.dependencies)}"
+  }
 }
