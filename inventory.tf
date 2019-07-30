@@ -210,7 +210,6 @@ resource "null_resource" "copy_repo_bastion" {
     depends_on = [
         "local_file.ose_inventory_file",
         "local_file.host_file_render",
-        "null_resource.dependency"
     ]
 }
 
@@ -231,10 +230,7 @@ resource "null_resource" "copy_repo_master" {
         destination = "~/"
     }
 
-    depends_on = [
-        "local_file.host_file_render",
-        "null_resource.dependency"
-    ]
+    depends_on = ["local_file.host_file_render"]
 
 }
 
@@ -255,10 +251,7 @@ resource "null_resource" "copy_repo_infra" {
         destination = "~/"
     }
 
-    depends_on = [
-        "local_file.host_file_render",
-        "null_resource.dependency"
-    ]
+    depends_on = ["local_file.host_file_render"]
 
 }
 
@@ -279,10 +272,7 @@ resource "null_resource" "copy_repo_app" {
         destination = "~/"
     }
 
-    depends_on = [
-        "local_file.host_file_render",
-        "null_resource.dependency"
-    ]
+    depends_on = ["local_file.host_file_render"]
 
 }
 
@@ -303,8 +293,5 @@ resource "null_resource" "copy_repo_storage" {
         destination = "~/"
     }
 
-    depends_on = [
-        "local_file.host_file_render",
-        "null_resource.dependency"
-    ]
+    depends_on = ["local_file.host_file_render"]
 }
