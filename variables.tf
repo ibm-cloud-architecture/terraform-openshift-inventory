@@ -115,3 +115,8 @@ variable "haproxy" {
 variable "admin_password" {
     default = "admin"
 }
+
+variable "dependencies" {
+    type = "list"
+    default = []
+}
