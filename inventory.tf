@@ -237,7 +237,7 @@ resource "null_resource" "copy_repo_master" {
 }
 
 resource "null_resource" "copy_repo_infra" {
-    count = "${var.infra["nodes"])}"
+    count = "${var.infra["nodes"]}"
     connection {
         type = "ssh"
         user = "${var.ssh_username}"
