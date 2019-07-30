@@ -209,7 +209,8 @@ resource "null_resource" "copy_repo_bastion" {
 
     depends_on = [
         "local_file.ose_inventory_file",
-        "local_file.host_file_render"
+        "local_file.host_file_render",
+        "null_resource.dependency"
     ]
 }
 
@@ -231,7 +232,8 @@ resource "null_resource" "copy_repo_master" {
     }
 
     depends_on = [
-        "local_file.host_file_render"
+        "local_file.host_file_render",
+        "null_resource.dependency"
     ]
 
 }
@@ -254,7 +256,8 @@ resource "null_resource" "copy_repo_infra" {
     }
 
     depends_on = [
-        "local_file.host_file_render"
+        "local_file.host_file_render",
+        "null_resource.dependency"
     ]
 
 }
@@ -277,7 +280,8 @@ resource "null_resource" "copy_repo_app" {
     }
 
     depends_on = [
-        "local_file.host_file_render"
+        "local_file.host_file_render",
+        "null_resource.dependency"
     ]
 
 }
@@ -300,6 +304,7 @@ resource "null_resource" "copy_repo_storage" {
     }
 
     depends_on = [
-        "local_file.host_file_render"
+        "local_file.host_file_render",
+        "null_resource.dependency"
     ]
 }
