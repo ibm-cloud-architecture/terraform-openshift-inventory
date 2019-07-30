@@ -5,7 +5,7 @@ output "admin_password" {
 
 resource "random_id" "completed" {
     byte_length = 1
-    depends_on [
+    depends_on = [
         "local_file.ose_inventory_file",
         "local_file.host_file_render",
         "null_resource.copy_repo_bastion",
